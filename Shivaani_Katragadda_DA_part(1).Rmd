@@ -1,0 +1,675 @@
+---
+title: "Data Science & Analytics ASSIGNMENT"
+output:
+  word_document: default
+---
+
+
+## SHIVAANI KATRAGADDA
+## R00183214
+# part 1- a,b,c,d,e questions
+
+In this assignment, I was given a Credit_Risk6_final.xlsx file which contains two sheets, which were named Scoring_Data and Training_Data.
+
+The Scoring_Data i.e sheet1 contains thirteen columns and 13 rows of data.The Training_Data i.e Sheet2 contains fourteen columns, 780 rows of data.
+
+The thirteen columns in the Scoring_Data are named as follows, ID, Checking Acct, Credit History, Loan Reason, Savings Acct, Employment, Personal Status, Housing, Job Type, Foreign National, Months since Checking Acct opened, Residence Time, Age.
+
+In Training_Data there are fourteen columns which are named as follows ID, Checking Acct(have different levels they are as follows No acct, 0balance, low (balance), high (balance)),Credit History(have different levels/domains are as follows All paid – no credit taken or all credit paid back duly,Bank Paid – All credit at this bank paid back, Current – Existing loan/credit paid back duly till now,Critical – Risky account or other credits at other banks, Delay – Delay in paying back credit/loan in the past  ), Loan Reason, Savings Acct, Employment, Personal Status, Housing, Job Type, Foreign National, Months since Checking Acct opened(The number of months the customer has an account with the bank), Residence Time (In current district), Age,  Credit Standing.
+
+Training_Data contains the same columns that are present in Scoring_Data but there is one extra column which is different that is Credit Standing column which is a outcome/label variable classifying each case as either a good loan or bad loan. This is the little introduction about the given dataset.
+
+ 
+```{r}
+# install.packages("readxl")
+# install.packages("ggplot2")
+# install.packages("DataExplorer")
+# install.packages("caret")
+# install.packages("rpart")
+# install.packages("rpart.plot")
+# install.packages("dplyr")
+# install.packages("C50")
+# install.packages("randomForest")
+# install.packages("GGally")
+
+library(readxl)#readxl package useful to get the data from excel to R easily.
+
+library(ggplot2)#ggplot2 package is particularly useful for visualizing the data.
+
+library(DataExplorer)#DataExplorer package is useful for visualizing and analysing the data
+
+library(caret)#Caret(Classification And REgression Training) package contains set of functions that are useful for creating predictive models
+
+library(rpart)#rpart(Recursive Partitioning And Regression Trees) package which is useful for creating decision tree
+
+library(rpart.plot)#rpart.plot packages which will  scales and adjusts the displayed tree for best fit
+
+library(dplyr)#dplyr package which is useful for manipulating datasets in R very effectively.
+
+library(C50)#c50 package which is useful to build classification trees in R
+
+library(randomForest)#randomForest package which is useful to build classification trees in R
+
+#GGally package which extends ggplot2 by adding several functions to reduce the complexity of combining geoms with transformed data.
+library(GGally)
+
+```
+### QUESTION(a)
+Exploratory Data Analysis (EDA): - Carry out some EDA on the data set; carry out at least one trivariate analysis; do you notice anything unusual or any patterns with the data set?  Detail these and outline any actions you propose to take before you start model building in part b).  Max word count 500 words.
+
+```{r}
+#Reading the scoring_Data of Credit_Risk6_final.xlsx file by using read_excel() function and it is assigned to Credit_Risk6_final1
+
+Credit_Risk6_final1 <- read_excel("F:/Ds Assignment/Credit_Risk6_final.xlsx",sheet = "Scoring_Data")
+
+#Generating the dataframe for Credit_Risk6_final1 using as.data.frame() function and that dataframe is named as Credit_Scoring_Data 
+Credit_Scoring_Data<- as.data.frame(Credit_Risk6_final1)
+
+#Reading the Training_Data of Credit_Risk6_final.xlsx file by using read_excel() function and it is assigned to Credit_Risk6_final2
+Credit_Risk6_final2 <- read_excel("F:/Ds Assignment/Credit_Risk6_final.xlsx", sheet = "Training_Data")
+
+#Generating the dataframe for Credit_Risk6_final2 using as.data.frame() function and that dataframe is named as Credit_Training_Data
+Credit_Training_Data<- as.data.frame(Credit_Risk6_final2)
+
+#Performing Exploratory Data Analysis
+
+#DATA EXPLORER Package provides some good functions to know about the data
+#Introduce() function will give the outline of the data 
+#it tells about the number of rows,columns,missing values,discrete columns,continous columns,all missing columns,complete rows,total observations and memory usage 
+introduce(Credit_Training_Data)
+
+#plot_intro() will plot a graph which will give the percentage of  discrete columns,continous columns,All missing columns,complete rows and missing observations
+plot_intro(Credit_Training_Data)
+
+#plot_missing() function shows the percentage of missing values of each column present in the dataset
+plot_missing(Credit_Training_Data)
+
+#Filling the NA values
+
+#The missing data is a categorical data so i am replacing the missing values with the mode 
+
+dim(Credit_Training_Data) #dim() will give the number of rows and columns in the dataset 
+#plot_missing() function shows the percentage of missing values of each column present in the dataset
+plot_missing(Credit_Training_Data)
+#from plot_missing() we know that we have missing values in three columns they are Housing,Personal status   and Employment.
+
+table(is.na(Credit_Training_Data$Housing))#checking how many misssig values are there in the column
+sort(table(Credit_Training_Data$Housing))#sorting the column in order to get the total number of observation for each domain in the column in ascending order
+names(table(Credit_Training_Data$Housing))[table(Credit_Training_Data$Housing)==max(table(Credit_Training_Data$Housing))]#now taking the domain which is having the high value    
+Credit_Training_Data$Housing[is.na(Credit_Training_Data$Housing)] <- "Own"#Now assigining the highest value to the missing rows in the column
+table(is.na(Credit_Training_Data$Housing))#checking whether all the missing values are replace by running this line again
+
+table(is.na(Credit_Training_Data$Employment))#checking how many misssig values are there in the column
+sort(table(Credit_Training_Data$Employment))#sorting the column in order to get the total number of observation for each domain in the column in ascending order
+names(table(Credit_Training_Data$Employment))[table(Credit_Training_Data$Employment)==max(table(Credit_Training_Data$Employment))] #now taking the domain which is having the high value     
+Credit_Training_Data$Employment[is.na(Credit_Training_Data$Employment)] <- "Short"#Now assigining the highest value to the missing rows in the column
+table(is.na(Credit_Training_Data$Employment))#checking whether all the missing values are replace by running this line again
+
+
+table(is.na(Credit_Training_Data$`Personal Status`))#checking how many misssig values are there in the column
+sort(table(Credit_Training_Data$`Personal Status`))#sorting the column in order to get the total number of observation for each domain in the column in ascending order
+names(table(Credit_Training_Data$`Personal Status`))[table(Credit_Training_Data$`Personal Status`)==max(table(Credit_Training_Data$`Personal Status`))]#now taking the domain which is having the high value     
+Credit_Training_Data$`Personal Status`[is.na(Credit_Training_Data$`Personal Status`)] <- "Single"#Now assigining the highest value to the missing rows in the column
+table(is.na(Credit_Training_Data$`Personal Status`))#checking whether all the missing values are replace by running this line again
+
+
+#All the missing data is imputated with mode check again whether any missimg data is present in the datase by using plot_missing()
+plot_missing(Credit_Training_Data)
+
+#Performing some Exploratory data analysis
+#plot_histogram() is provided by DataExplorer package which will provide histograms of all columns which are containing the  continuous  data
+plot_histogram(Credit_Training_Data)#This will give histogram for 4 columns they are AGE,ID,Months since checking account opened,Residence time(in current district)
+
+#plot_bar() is provided by DataExplorer package which will provide barchart for discrete data
+
+plot_bar(Credit_Training_Data$`Checking Acct`)#plot_bar() for checking acct columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Credit History`)#plot_bar() for credit History columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Loan Reason`)#plot_bar() for Loan Reason columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Savings Acct`)#plot_bar() for Savings Acct columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$Employment)#plot_bar() for Employment columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Personal Status`)#plot_bar() for Personal Status columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$Housing)#plot_bar() for Housing columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Job Type`)#plot_bar() for Job Type columnn of credit_Training_Data
+plot_bar(Credit_Training_Data$`Foreign National`)#plot_bar() for Foreign National columnn of credit_Training_Data
+   
+#qq plot i.e Quantile-Quantile plot is used to visualize the deviation from a specific probability distribution
+#qq plot for ID,AGE,MONTHS SINCE CHECKING ACCT OPENED,RESIDENCE TIME all these columns are assigned to qq_data
+qq_data <- Credit_Training_Data[, c("ID", "Age","Months since Checking Acct opened","Residence Time (In current district)")]
+plot_qq(qq_data)#plotting qq plot for qq_data
+plot_qq(qq_data, by = "ID")#plotting qq plot by using id for qq_data
+
+
+#==========univariate
+#univariate plots
+hist(Credit_Training_Data$`Months since Checking Acct opened`,col="red")#histogram of Months since checking Acct opened column of Credit_Training_Data dataset
+#histogram of Residence Time (In current district) column of Credit_Training_Data dataset
+hist(Credit_Training_Data$`Residence Time (In current district)`,col="Yellow")
+#==========bivariate
+#bivariate plots
+
+#boxplot of ID and Age columns of Credit_Training_Data dataset
+boxplot(Credit_Training_Data$ID,Credit_Training_Data$Age)
+#boxplot of Months since Checking Acct opened and Residence Time (In current district) columns of Credit_Training_Data dataset
+boxplot(Credit_Training_Data$`Months since Checking Acct opened`~Credit_Training_Data$`Residence Time (In current district)`)
+
+#=========trivariant 
+#trivariant  Analysis 
+
+#plotting scatterplot between ID,Age, and Residence Time (In current district) using ggplot
+ggplot(Credit_Training_Data, aes(x=ID, y=Age)) + geom_point(aes(col=ID,size=`Residence Time (In current district)`))+
+   theme_minimal()+labs(subtitle="ID Vs Age", x="ID",y="Age",title="Scatterplot",caption = "Source: Credit_Scoring_Data")
+
+#plotting barplot between Age,Residence Time (In current district) and ID using ggplot
+
+ggplot(Credit_Training_Data, aes(x=`Residence Time (In current district)`, y=Age)) + geom_bar(stat="identity",aes(col=ID))+
+   theme_minimal()+labs(subtitle="ID Vs Age", x="Residence Time",y="Age",title="Bar plot",caption = "Source: Credit_Scoring_Data")
+
+#======proportion tables
+#1-D table
+#forming the table for Foreign National column of Credit_training_Data dataset and assigining to variable t1
+t1 <- table(Credit_Training_Data$`Foreign National`)
+t1#printing the t1 which gives the number of domains and its values
+table(Credit_Training_Data$`Foreign National`)/nrow(Credit_Training_Data)#finding proportion table
+#or
+prop.table(table(Credit_Training_Data$`Foreign National`)/nrow(Credit_Training_Data))#finding proportion table
+
+# 2-D table
+#forming the table for Checking Acct and Credit History  column of Credit_training_Data dataset and assigining to variable t2
+
+t2 <- table(Credit_Training_Data$`Checking Acct`,Credit_Training_Data$`Credit History`)
+t2#printing the t2 which gives the number of domains and its values
+prop.table(t2, margin = 2)#printing lproportion table for t2
+#using round function to round the value to 2 decimal points and printing first few lines by using head() function for columns Checking Acct and Credit History by using margin=2 
+head(round(prop.table(table(Credit_Training_Data$`Checking Acct`,Credit_Training_Data$`Credit History`),2),2))
+# Now making barplot for Checking Acct and Credit History columns
+barplot(prop.table(table(Credit_Training_Data$`Checking Acct`,Credit_Training_Data$`Credit History`), margin = 2))
+
+# 3 way pivot table #
+#forming the table for Savings Acct,Job Type and Foreign National columns of Credit_training_Data dataset and assigining to variable t3
+
+t3 <- table(Credit_Training_Data$`Savings Acct`,Credit_Training_Data$`Job Type`,Credit_Training_Data$`Foreign National`)
+t3#printing the t3 which gives the number of domains and its values
+#using round function to round the value to 2 decimal points by using margin=2 for columns Savings Acct,Job Type and Foreign National of Credit_training_Data dataset
+round(prop.table(t3, margin = 2),2)
+
+#forming the table for Loan Reason,Personal Status and Housing columns of Credit_training_Data dataset and assigining to variable t3_1
+
+t3_1 <- table(Credit_Training_Data$`Loan Reason`,Credit_Training_Data$`Personal Status`,Credit_Training_Data$Housing)
+t3_1#printing the t3_1 which gives the number of domains and its values
+#using round function to round the value to 2 decimal points by using margin=1 for Loan Reason,Personal Status and Housing columns of Credit_training_Data dataset
+round(prop.table(t3_1,margin = 1),2)
+
+# 3 way pivot table - better to use ftable for proportions 
+#forming the ftable(frequency table to print the result more clearly and attractively) for Savings Acct,Job Type and Foreign National columns of Credit_training_Data dataset and assigining to variable t3_2
+
+t3_2 <- ftable(Credit_Training_Data$`Savings Acct`,Credit_Training_Data$`Job Type`,Credit_Training_Data$`Foreign National`)
+t3_2#printing the t3_2 which gives the number of domains and its values
+#using round function to round the value to 2 decimal points by using margin=2 for columns Savings Acct,Job Type and Foreign National of Credit_training_Data dataset
+round(prop.table(t3_2,margin = 2),2)#check this
+
+#forming the ftable(frequency table to print the result more clearly and attractively) for Loan Reason,Personal Status and Housing columns of Credit_training_Data dataset and assigining to variable t3_3
+
+t3_3 <- ftable(Credit_Training_Data$`Loan Reason`,Credit_Training_Data$`Personal Status`,Credit_Training_Data$Housing)
+t3_3#printing the t3_3 which gives the number of domains and its values
+#using round function to round the value to 2 decimal points by using margin=2 for Loan Reason,Personal Status and Housing columns of Credit_training_Data dataset
+round(prop.table(t3_3,margin = 2),2)
+
+#ggpairs
+#The  ggpairs() function produces a matrix of scatter plots for visualizing the correlation between variables
+ggpairs(Credit_Training_Data)#Make a matrix of plots with Credit_Training_Data data set
+
+##ggcorrelation
+#The  ggcorr() function draws a correlation matrix plot using ggplot2.
+ggcorr(Credit_Training_Data, palette = "RdBu", label = TRUE)#Makes a  correlation matrix plot for Credit_Training_Data
+```
+Initially, I loaded both the sheets by using the read_excel() function which is available in the readxl package.I Read the scoring_Data of Credit_Risk6_final.xlsx file by using read_excel() function and it is assigned to Credit_Risk6_final1 and Generated the dataframe for Credit_Risk6_final1 using as.data.frame() function and that dataframe is named as Credit_Scoring_Data.
+
+And Read the Training_Data of Credit_Risk6_final.xlsx file by using read_excel() function and it is assigned to Credit_Risk6_final2.Generated the dataframe for Credit_Risk6_final2 using as.data.frame() function and that dataframe is named as Credit_Training_Data.
+
+I used some functions from the data explore package which will give some idea of a given dataset.
+Firstly I used the introduce() function will give the outline of the data it tells about the number of rows, columns, missing values, discrete columns, continuous columns, all missing columns, complete rows, total observations, and memory usage.
+
+And then plot_intro() will plot a graph that will give the percentage of discrete columns, continuous columns, All missing columns, complete rows, and missing observations. The plot_missing() function shows the percentage of missing values of each column present in the dataset.
+
+After that, I replaced the missing values with the mode because most of the data is categorical so mode will be the best option to replace the missing values(NA). 
+Later plot_histogram() is provided by the DataExplorer package which will provide histograms of all columns which are containing the continuous data, from the histogram, I observed that the Months since Checking Acct opened gradually increased to a certain point and it started falling down from a certain point.
+Residence Time (In current district) column is increasing and decreasing it is not following a particular pattern.plot_bar() is provided by the DataExplorer package which will provide a bar chart for discrete data.
+For Checking Acct the No Account is the highest among all the other categories,  the Credit History has the highest percentage the current, for the loan reason car new stands at first place and Retraining stands at the last place. 
+For Savings Acct low category is in the first place and for Employment, most of the people stand at short employment. The personal status most of the people are single and divorced comes in second place. For the housing, job type and foreign nation own, skilled, yes categories have major importance.
+
+Later the qq plot i.e Quantile-Quantile plot is used to visualize the deviation from a specific probability distribution.plot_qq for ID, AGE, MONTHS SINCE CHECKING ACCT OPENED, RESIDENCE TIME all these columns.
+And then I performed univariate, bivariate and trivariate analysis and some pivot tables. After that by using the GGally package and I found the ggcorr () function draws a correlation matrix plot using ggplot2 and ggpairs() function produces a matrix of scatter plots for visualizing the correlation between variables.
+
+There are no specific patterns within the dataset or any unusual things which are very important in the data set.
+
+For building a model to the decision tree I used the rpart package. Initially, I will be making two samples by dividing the rows into 80% training data and 20% testing data probability.
+I will be taking the training data and train the model later for prediction the model I will be considering the testing data and predicting the data. Finally I will find the confusion matrix to know the accuracy of the model.
+
+
+### QUESTION(b)
+
+Build a decision tree model and give your decision tree, detailing its parameters. Explain how you decided on/fined tuned these parameters. (Include an image of your tree as well as a text output description.). Use set.seed(abc) where abc are the last 3 digits of your student no.  Use this set.seed for all other model building below. 
+
+```{r}
+
+#The seed number is the starting point used in the generation of a sequence of random numbers, and the same results will be given if the same seed number is used.
+set.seed(214)#setting the seed with the last three digits of my student number
+#here I am making two samples by dividing the rows of Credit_Training_Data into 80% and 20% probability and storing in to variable id
+id<-sample(2,nrow(Credit_Training_Data),prob=c(0.8,0.2),replace=TRUE)
+
+#I am creating training data with the first sample(80%) i.e id==1 and storing that in to credit_train
+Credit_train=Credit_Training_Data[id==1,]
+#View(Credit_train)
+nrow(Credit_train)#here by using nrow we can see how many rows the credit_train is taking
+#after execution it show it is taking 633 rows for training the model
+
+#I am creating testing data with the second sample(20%) i.e id==2 and storing that in to credit_test
+
+Credit_test=Credit_Training_Data[id==2,]
+#View(Credit_test)
+#here by using nrow we can see how many rows the credit_train is taking
+nrow(Credit_test)
+#after execution it show it is taking 147 rows for testing the model
+
+#now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data)
+#here i am using rpart package for creating the decision tree
+#the model is stored in the  variable Credit_model
+Credit_model<-rpart(`Credit Standing`~.,data=Credit_train)
+Credit_model#viewing the model 
+
+plot(Credit_model,margin=0.1)#plotting the Credit_model,the plot will give the outline of the decision treei.e the graphical view of tree 
+text(Credit_model,use.n=TRUE,pretty=TRUE,cex=0.9)#the graphical view of the tree is filled with the text by using the text() function
+
+#prp-Plot An Rpart Model.
+#The prp function plots rpart trees. It automatically scales and adjusts the displayed tree for best fit. 
+#This function is in the rpart.plot R package. 
+#plotting the credit_model using prp() function
+prp(Credit_model,box.col=c("Grey", "Orange")[Credit_model$frame$yval],varlen=0,faclen=0, type=1,extra=4,under=TRUE,main="Decision tree")
+
+# rpart.plot is also automatically scales and adjusts the displayed tree for best fit
+#plotting the credit_model again by using rpart.plot() function and this function is also available in rpart.plot
+rpart.plot(Credit_model,main="Decision tree")
+
+#NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+#Predicted values are stored in pred_Credit variable
+pred_Credit<-predict(Credit_model,newdata=Credit_test,type="class")
+plot(pred_Credit)#I am plotting the predicted values to see the ratio of bad and good 
+
+#Now creating the table for predicted values and actual test values i.e pred_Credit and Credit_test$`Credit Standing`
+table(pred_Credit,Credit_test$`Credit Standing`)
+#now finding the confusion matrix by using confusionMatrix() function which is available in caret package.
+##generally confusion matrix is the sum of true positive and true negatives  divide by sum of all the values in the table.
+#finding confusion matrix for pred_Credit and Credit_test$`Credit Standing`
+confusionMatrix(table(pred_Credit,Credit_test$`Credit Standing`))
+
+
+#Now pruning the tree generally it is called cross validation
+
+set.seed(214)#setting the seed with the last three digits of my student number
+
+#To validate the model we use the printcp functions. ‘CP’ stands for Complexity Parameter of the tree.
+printcp(Credit_model)#finding the complexity parameter of the credit_model
+
+#We prune the tree to avoid any overfitting of the data.
+#The final result is to have a small tree and the one with least cross validated error given by printcp() function i.e. ‘xerror’.
+#From the above printcp(), we can select the one value which have least cross-validated error and use it to prune the tree.
+Credit_model$cptable[which.min(Credit_model$cptable[,"xerror"]),"CP"]#This function returns the optimal cp value associated with the minimum error.
+
+#Plotcp() provides a graphical representation to the cross validated error summary. The cp values are plotted against the geometric mean to depict the deviation until the minimum value is reached.
+plotcp(Credit_model)#plotting for the model
+#now pruning the tree by using prune() and storing that in ptree variable
+ptree<- prune(Credit_model,
+              cp= Credit_model$cptable[which.min(Credit_model$cptable[,"xerror"]),"CP"])
+ptree#printing the prune tree
+
+#plotting the ptree,the plot will give the outline of the decision treei.e the graphical view of tree 
+plot(ptree)
+
+#the graphical view of the tree is filled with the text by using the text() function
+text(ptree,use.n=TRUE,pretty=TRUE,cex=0.9)
+
+#prp-Plot An Rpart Model.
+#The prp function plots rpart trees. It automatically scales and adjusts the displayed tree for best fit. 
+#This function is in the rpart.plot R package. 
+#plotting the pruned tree ptree using prp() function
+prp(ptree,box.col=c("Grey", "Orange")[ptree$frame$yval],varlen=0,faclen=0, type=1,extra=4,under=TRUE)
+
+# rpart.plot is also automatically scales and adjusts the displayed tree for best fit
+#plotting the ptree again by using rpart.plot() function and this function is also available in rpart.plot
+
+rpart.plot(ptree)
+
+#NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+#Predicted values are stored in tree.pred variable
+
+tree.pred<-predict(ptree,Credit_test,type="class")
+plot(tree.pred)#I am plotting the predicted values to see the ratio of bad and good 
+
+#Now creating the table for predicted values and actual test values i.e tree.pred and Credit_test$`Credit Standing`
+
+table(tree.pred,Credit_test$`Credit Standing`)
+
+#finding confusion matrix for tree.pred and Credit_test$`Credit Standing`
+
+confusionMatrix(table(tree.pred,Credit_test$`Credit Standing`))
+
+```
+I used the rpart package to build a decision tree
+
+1.Initially, I set seed value with the last three digits of my student number i.e 214. The seed number is the starting point used in the generation of a sequence of random numbers, and the same results will be given if the same seed number is used. 
+
+2.I am making two samples by dividing the rows of Credit_Training_Data into 80% and 20% probability and storing it in variable id.
+
+3.I am creating training data with the first sample(80%) i.e id==1 and storing that into credit_train. After that, I am using nrow which will show how many rows the credit_train is taking. 
+
+4.I am creating testing data with the second sample(20%) i.e id==2 and storing that into credit_test and using now which will show how many rows the credit_test is taking.
+
+5.Now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data).The model is stored in the variable Credit_model. 
+
+6.Plotting the Credit_model, the plot will give the outline of the decision tree i.e the graphical view of a tree, the graphical view of the tree is filled with the text by using the text() function. Now plotting the graph very attractively by using prp (Plot An Rpart Model). The  prp() function plots rpart trees, It automatically scales and adjusts the displayed tree for best fit. This function is in the rpart. plot R package. The  rpart.plot is also automatically scaled and adjusts the displayed tree for best fit, now plotting the model again by using rpart.plot() function and this function is also available in rpart.plot
+
+7.Later predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data) and Predicted values are stored in pred_Credit variable
+
+8.And then creating the table for predicted values and actual test values i.e pred_Credit and Credit_test$`Credit Standing`.
+
+9.To find the confusion matrix I used the confusionMatrix() function which is available in the caret package. Generally confusion matrix is the sum of true positives and true negatives divided by the sum of all the values in the table.
+
+After finding the confusion matrix for pred_Credit and Credit_test$`Credit Standing` accuracy of the model is “73.47%”
+
+Pruning the tree generally is called cross-validation
+
+The process for pruning the tree is as follows:
+
+1.set the seed with the last three digits of my student number
+
+2. To validate the model we use the printcp functions. ‘CP’ stands for Complexity Parameter of the tree. Finding the complexity parameter of the credit_model
+
+3. We prune the tree to avoid any overfitting of the data. The final result is to have a small tree and the one with least cross validated error given by printcp() function i.e. ‘xerror’.From the above printcp(), we can select the one value which has the least cross-validated error and use it to prune the tree.
+
+4.Plotcp() provides a graphical representation of the cross validated error summary. The cp values are plotted against the geometric mean to depict the deviation until the minimum value is reached. Now pruning the tree by using prune() and storing that in ptree variable.
+
+5. Plot the tree and fill the plot with the text, to make the decision tree attractive use PRP() and rpart.plot() functions and make the good attractive trees.
+
+6.NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)and store it in a tree. pred variable,  after that, create the table for predicted values and actual test values i.e tree.pred and Credit_test$`Credit Standing` and find the confusion matrix the accuracy obtained for pruned decision tree is “74.83%”
+
+After pruning the accuracy increases which means that the pruned decision tree model generalizes well and is more suitable.
+Pruning is a technique in machine learning and search algorithms that reduces the size of decision trees by removing sections of the tree that provide little power to classify instances.
+Pruning reduces the complexity of the final classifier, and hence improves predictive accuracy by the reduction of overfitting. This the reason behind the increase in the accuracy from 73.47 to 74.83
+
+### QUESTION(c)
+
+Use the decision tree to predict results for the scoring set. Choose 5 different potential loan clients and explain to Kate in plain English how the decision tree works (15 marks) and how the accuracy/probabilities of these being a good/bad loan was calculated by the decision tree, outling your assumptions (5 marks). Max word count 500 words. 
+
+```{r}
+
+#renaming the Residence Time column to Residence Time (In current district) in Credit_scoring_data dataset because the same column have different names in both the sheets in a file
+
+#Inorder to predict the values all the column names should be same in both sheets
+
+Credit_Scoring_Data= Credit_Scoring_Data%>% rename(`Residence Time (In current district)` = `Residence Time`)
+
+colnames(Credit_Scoring_Data)#Prints all the column names present in credit_scoring_data dataset
+
+set.seed(214)#setting the seed with the last three digits of my student number
+
+#predicting the values by using the  tree predict values with the Credit_scoring_data values
+
+pred_Credit_score<-predict(Credit_model,newdata=Credit_Scoring_Data,type="class")
+
+pred_Credit_score#printing the predicted values of credit_scoring_data
+
+```
+In the question, it is given that use the decision tree to predict the results for the scoring_data i.e Credit_Scoring_Data.
+
+So let me describe the decision tree and how it works first
+
+Initially, I made two samples by dividing the rows into 80% training data and 20% testing data probability. I considered the training data and train the model, later for prediction the model I will be considering the testing data and predicting the data. Finally, I will find the confusion matrix to know the accuracy of the model. This is how I modeled the decision tree
+
+Now let me explain the root node, parent node  and child nodes of decision tree
+
+The root node of my decision tree is Credit History.
+
+1. If Credit History is equal to critical it will follow the left-hand side of the root node which will give the result ”BAD”.If Credit History is not equal to critical it will follow the right side path of the root node.
+
+2.on On the right side of the root node if the credit history is not equal to current or Delay it will follow the right path of credit History which gives the result” GOOD”.
+If credit history is equal to current or Delay I will follow the left path there one condition occurs
+if Employment is equal to short It will follow the left path where loan reason is equal to Education,Furniture or large appliances  the result is “GOOD” otherwise it will follow right path where Months since checking Acct opened greater than or equal to 15.5 result is “BAD” else the result is “GOOD”
+If Employment is not equal to short it will follow the right path where one condition occurs i.e checking Acct equal to zero balance, high, low it will follow left path where Months since checking Acct opened greater than equal to 41.5 results is “BAD” else if savings Acct equal to no account result is “BAD” otherwise “GOOD”. If checking Acct  is not equal to zero balance, high, low it follows the right path where the condition occurs Age less than 23 the result is “BAD” otherwise “GOOD”
+
+This is how my decision tree works.
+
+Now I will predict the values for Scoring_data by taking the decision tree
+
+Firstly I renamed the Residence Time column to Residence Time (In current district) in Credit_scoring_data dataset because the same column has different names in both the sheets in a file. Inorder to predict the values all the column names should be the same in both sheets.
+predicting the values by using the  tree predict values with the Credit_scoring_data values
+
+In question, it is given that Choose 5 different potential loan clients and explain to Kate in plain English how the decision tree works
+
+So I will be considering the ID’s randomly i.e considering IDs 782,786,788,790,793.
+
+Now I am going to explain how the decision tree works for the above-selected values.
+
+For ID 782:
+
+The credit History value is current so it will not satisfy the root node condition it will follow the  right path of root node where there is a condition if Credit History is equal to Current and Delay so I will follow left path where Employment is equal to short or not, no Id 782 have employment is Medium so  it will follow the right path where checking Acct is equal to 0 balance,high,low  the condition is satisfied here ID 782 have checking Acct is low so left path is followed where condition occurs i.e Months since Checking Acct opened >=41.5,No the condition is not satisfied so I will take right side where savings Acct=no Acct condition is not satisfied so the result is “GOOD”
+
+For id 786:
+The credit History value is current so it will not satisfy the root node condition it will follow the  right path of root node where there is a condition if Credit History is equal to Current and Delay so I will follow left path where Employment is equal to short or not ,no Id 786 is unemployment so  it will follow the right path where checking Acct is equal to 0 balance, high,low  the condition is satisfied here ID 786 have checking Acct is low so left path is followed where condition occurs i.e Months since Checking Acct opened >=41.5,yes the condition is satisfied so the result is “BAD”
+
+For id 788:
+The credit History value is All Paid so it will not satisfy the root node condition it will follow the  right path of root node where there is a condition if Credit History is equal to Current and Delay so I will follow the right which gives the result “GOOD”
+
+For id 790:
+The credit History value is current so it will not satisfy the root node condition it will follow the  right path of root node where there is a condition if Credit History is equal to Current and Delay so I will follow left path where Employment is equal to short or not ,no Id 790 have employment Medium  so  it will follow the right path where checking Acct is equal to 0 balance,high,low  the condition is not satisfied here ID 790 have checking Acct is No account so right path is followed where condition occurs i.e Age<23, No the condition is satisfied so the result is “GOOD”
+
+For id 793:
+The credit History value is current so it will not satisfy the root node condition it will follow the  right path of root node where there is a condition if Credit History is equal to Current and Delay so I will follow left path where Employment is equal to short or not ,no Id 793 have short employment  so  it will follow the left path where Loan Reason is equal to Education, furniture, large appliances the condition is not satisfied here ID 793 have Loan Reason car New so it will take  right path where condition occurs i.e e Months since Checking Acct opened >=15.5, yes the condition is satisfied so the result is “BAD”
+
+This is how the decision works for the IDS 782,786,788,790,793.
+
+The Good and Bad values are calculated based on the column Credit History, Employment, Loan Reason, Checking Acct, Months since checking Acct opened, saving Acct, Age. 
+
+If the
+credit History --critical,current,Delay 
+Employment--short
+Loan Reason--Education, Furniture, Large Appliances
+Checking Account--0 Balance, Low, High
+Months since checking Acct opened-- >=15.5 and >=41.5
+Saving Acc--No Account
+Age--<23
+
+By considering the above columns and conditions only the good or bad loan Is decided. These conditions are satisfied and followed correctly we will get the good accuracy/probabilities of these being a good/bad loan was calculated by the decision tree correctly.so whatever the assumptions are mentioned above are followed we get the good accuracy of being good or bad loan is calculated 
+
+
+
+### QUESTION(d)
+
+Now try and improve your model using 2 other approaches, e.g. ensemble technique, boosting or a different model.  Explain your training/validation/testing methodology. Comment on your results and analyse why your model is giving better/worse results.
+
+```{r}
+
+#  Boosting Algorithms
+
+#trainControl  is the computational  quality that is not easy to notice but may be important to the train function
+
+#trainControl that allow us to perform variety of cross validation
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
+set.seed(214)#setting the seed with the last three digits of my student number
+
+
+#now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data)
+#here i am using c50 package for boosting algorithm improving the  decision tree model
+#the model is stored in the  variable Boost_model
+Boost_model <- train(`Credit Standing`~., data=Credit_train, method="C5.0", metric="Accuracy", trControl=control)
+
+plot(Boost_model)#plotting the model
+
+#NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+
+#Predicting the values by using Boost_model and Credit_test data and storing in the variable predict_boost
+
+predict_boost=predict(Boost_model,newdata=Credit_test)
+
+plot(predict_boost)#I am plotting the predicted values to see the ratio of bad and good 
+
+#Now creating the table for predicted values and actual test values i.e predict_boost and Credit_test$`Credit Standing`
+
+table(predict_boost,Credit_test$`Credit Standing`)
+
+#finding confusion matrix for predict_boost and Credit_test$`Credit Standing`
+
+confusionMatrix(table(predict_boost,Credit_test$`Credit Standing`))
+
+
+
+#BAGGING Algorithm
+
+#trainControl the computational  quality that is not easy to notice but may be important to the train function
+#trainControl that allow us to perform variety of cross validation
+
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
+
+set.seed(214)#setting the seed with the last three digits of my student number
+
+#now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data)
+#here i am using random forest package for bagging algorithm improving the  decision tree model
+#the model is stored in the  variable Bagging_model
+
+Bagging_model <- train(`Credit Standing`~., data=Credit_train, method="rf", metric="Accuracy", trControl=control)
+
+plot(Bagging_model)#printing the Bagging_model
+
+#NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+#Predicting the values by using Bagging_model and Credit_test data and storing in the variable Bagging_Predict
+
+Bagging_Predict=predict(Bagging_model,newdata=Credit_test)
+
+#Now creating the table for predicted values and actual test values i.e Bagging_Predict and Credit_test$`Credit Standing`
+
+table(Bagging_Predict,Credit_test$`Credit Standing`)
+
+#finding confusion matrix for Bagging_Predict and Credit_test$`Credit Standing`
+
+confusionMatrix(table(Bagging_Predict,Credit_test$`Credit Standing`))
+
+
+
+```
+Ensembles can give you a boost inaccuracy on your dataset.
+To increase accuracy on your dataset is to combine the predictions of multiple different models together. This is called an ensemble prediction.
+
+Ensemble learning is using multiple learning algorithms at the same time to obtain prediction with an aim to have better predictions of the individual value.
+
+We use ensemble learning because
+Better accuracy(low rate)
+High consistency avoids overfitting
+Reduces bias and variance errors
+
+When and where to use ensemble learning
+-single model overfits
+-results worth the extra training
+-can be used for classifications as well as regression
+
+1.Bagging or Bootstrap aggregation
+
+It is an ensemble method where we use multiple models of same learning algorithm trained with subsets of dataset randomly picked from the training dataset
+
+We select a subset of training dataset in to bags we do it randomly one point at a time and once a point is selected I cannot be removed from training data set so it is eligible to be selected again so fill the bag with subset of dataset and train the learning models and take the vote on their output. It is simple defined as Building multiple models (typically of the same type) from different subsamples of the training dataset.
+
+The algorithm is implemented using random forest package
+
+1. Initially I defined train control that allows us to perform a variety of cross-validation, trainControl is the computational quality that is not easy to notice but may be important to the train function.
+
+2. Setting the seed with the last three digits of my student number
+
+3 now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data). here i am using random forest package for bagging algorithm improving the decision tree model.
+And the model is stored in the  variable Bagging_model
+
+4.NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+Predicting the values by using Bagging_model and Credit_test data and storing in the variable Bagging_Predict
+Now creating the table for predicted values and actual test values i.e Bagging_Predict and Credit_test$`Credit Standing`
+and find the confusion matrix which gives the accuracy “77.55%”
+
+Boosting:
+
+Incase of boosting we give more emphasis on selecting datasets or datapoint which give wrong predictions in order to improve the accuracy so we select the first sub data set in the same way as we did for bagging and train the model then test the trained model with training  dataset and for each data point where prediction is wrong we put It in second data set along with randomly selected point from training dataset again train the model with new dataset  and combine it with the previously trained model to form ensemble .we again test ensemble of two models on the training dataset and again select points which give the wrong prediction along with randomly selected points from training dataset and repeat the process .this results in good accuracy. It is simply defined as Building multiple models (typically of the same type) each of which learns to fix the prediction errors of a prior model in the chain.
+
+The algorithm is implemented using the c50 package
+
+1. Initially I defined train control that allows us to perform a variety of cross-validation, train control is the computational quality that is not easy to notice but may be important to the train function.
+
+2. Setting the seed with the last three digits of my student number
+
+3. now creating the model by using the credit standing column with the data credit_train i.e training data(we will train the model by using this training data)
+here I am using c50 package for boosting algorithm improving the  decision tree model, and the model is stored in the  variable Boost_model
+
+4. NOw predicting the model by using test data i.e by using credit_test(we will always predict the values by using testing data)
+Predicting the values by using Boost_model and Credit_test data and storing in the variable predict_boost
+Now creating the table for predicted values and actual test values i.e predict_boost and Credit_test$`Credit Standing` and find the confusion matrix which gives the accuracy “78.23%”
+
+Among both, the models Boosting Algorithm gives more accuracy when compared to Bagging Algorithm
+
+Both are ensemble methods to get N learners from 1 learner, but, while they are built independently for Bagging, Boosting tries to add new models that do well where previous models fail.
+
+Both generate several training data sets by random sampling, but only Boosting determines weights for the data to tip the scales in favor of the most difficult cases.
+
+Both make the final decision by averaging the N learners (or taking the majority of them), but it is an equally-weighted average for Bagging and a weighted average for Boosting, more weight to those with better performance on training data.
+
+Both are good at reducing variance and provide higher stability, but only Boosting tries to reduce bias. On the other hand, Bagging may solve the over-fitting problem, while Boosting can increase it.
+
+
+### QUESTION(e)
+
+Kate’s company uses a process that is a mixture of a grading system and human input to grade each past loan as good or bad.  Kate is suspicious that during a particular time that this process performed very poorly and produced inaccurate results.  Develop a strategy so that you can you find a series of consecutive or nearly consecutive ID numbers of circa 10 or more, i.e. where these gradings show a suspiciously incorrect pattern. Detail how you go about your investigation and how you find this pattern. 
+```{r}
+
+set.seed(214)#setting the seed with the last three digits of my student number
+
+class(pred_Credit)#class of pred_credit is factor
+class(Credit_test$`Credit Standing`)#class of Credit_test$`Credit Standing` is character 
+
+Credit_test$`Credit Standing`<-as.factor(Credit_test$`Credit Standing`)#so converting Credit_test$`Credit Standing as factor
+class(Credit_test$`Credit Standing`)#now the class of Credit_test$`Credit Standing is factor
+#Making one list and placing both Pred_credit and Credit_test$`Credit Standing in to list
+lst <- list(
+   one = pred_Credit,
+   two = Credit_test$`Credit Standing`)
+lst#displaying the list
+lst[1]#displaying list 1
+lst[2]#displaying list 2
+
+#writing for loop for printing mismatched values of predicted values and actual values 
+for (index in 1:147) {
+   x_cand <- lst$one[index]#storing the values of list one in x_cand
+   y_cand <- lst$two[index]#storing the values of list two in y_cand
+  
+ #if x_cand(first list) value is not equal to y_cand(second list)
+   if(x_cand!=y_cand){
+      print(Credit_test$ID[index])#the printing the ID's of all mismatched values
+   }
+}
+
+
+
+```
+
+Initially, I am setting the seed value with the last three digits of my student number
+Then checking the class of predicted value(pred_credit)  and actual values (Credit_test$`Credit Standing`)of decision tree 
+
+Predicted values are factors and actual values are characters so I changed actual values to factors and then I made one list and kept these actual values and predicted values in to list 
+I implemented one for loop in that loop I assigned list one values to x_cand, list two values to y_cand
+If the x_cand Value is not equal to y_cand values then I am printing the ID’s i.e the mismatched values  ID’s
+
+Therefore I got mismatched values. Now I had a look at the IDs from 681 to 707 totally six consecutive IDs produced the mismatched values i.e the incorrect values.
+
+This is the method I used to find the incorrect pattern and I got six consecutive values from 681 to 707 shows an incorrect pattern  
+
+
+References:
+1.https://machinelearningmastery.com/machine-learning-ensembles-with-r/
+Refered this site for boosting and bagging algorithms
+
+
+
